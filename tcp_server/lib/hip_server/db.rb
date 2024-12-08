@@ -6,7 +6,7 @@ module HipServer
     attr_reader :db
 
     def initialize(name: "hip_server.db")
-      db_path = File.join(__dir__, "../db_sqlite/")
+      db_path = File.join(__dir__, "../../db_sqlite/")
       FileUtils.mkdir_p db_path
       @db = SQLite3::Database.new File.join(db_path, name)
       db.results_as_hash = true
