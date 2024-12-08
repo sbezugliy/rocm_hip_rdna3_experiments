@@ -9,10 +9,12 @@ module HipServer
       db_path = File.join(__dir__, "../db_sqlite/")
       FileUtils.mkdir_p db_path
       @db = SQLite3::Database.new File.join(db_path, name)
+      db.results_as_hash = true
+      @db
     end
 
     def all_data
-      @db.execute("SELECT * FROM data").map
+      @db.execute("SELECT * FROM data")
     end
 
     # rubocop:disable Metrics/ParameterLists
