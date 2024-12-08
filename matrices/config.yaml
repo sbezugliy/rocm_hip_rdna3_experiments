@@ -1,0 +1,4 @@
+vector_ops:
+  vector_size: 100
+  vector_b_size: 5
+  block_size: 256

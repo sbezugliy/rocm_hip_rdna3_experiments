@@ -3,6 +3,19 @@
 #include "vector_multiply_kernel.hip.cpp" // Include the HIP kernel file
 #include <rocrand/rocrand.h>
 #include <time.h>
+#include <TcpServer.h>
+#include <cstddef> 
+#include <yaml-cpp/yaml.h>
+
+template<typename T>
+size_t sizeInBytes(size_t variable) {
+    return variable * sizeof(T);
+}
+
+template<typename IntegerType>
+size_t numBlocks(IntegerType variable, IntegerType block_size) {
+    return (variable + block_size - 1) / block_size;
+}
 
 void print_vector(char *name, float *vector, size_t vector_size) {
     std::cout << name << "<" << vector_size << ">: [ ";
@@ -23,12 +36,12 @@ int main() {
     rocrand_generator gen;
     float *d_vector_a, *h_vector_a, *h_vector_output, *d_vector_output;
 
-    h_vector_a = (float*)malloc(sizeof(float) * vector_size);
-    h_vector_output = (float*)malloc(sizeof(float) * vector_size);
+    h_vector_a = (float*)malloc(sizeInBytes<float>(vector_size));
+    h_vector_output = (float*)malloc(sizeInBytes<float>(vector_size));
 
     float h_vector_b[] = {-0.2575478, 0.765, 0.235346, -0.2357, 0.134537};
     
-    size_t num_blocks = (vector_size + block_size - 1) / block_size;
+    size_t num_blocks = numBlocks(vector_size, block_size);
 
     float *d_vector_b;
 
@@ -37,23 +50,23 @@ int main() {
     std::cout << "Blocks number: " << num_blocks << std::endl;
     std::cout << "Block size: " << block_size << std::endl;
 
-    hipMalloc((void **)&d_vector_a, vector_size * sizeof(float));
+    hipMalloc((void **)&d_vector_a, sizeInBytes<float>(vector_size));
     rocrand_create_generator(&gen, ROCRAND_RNG_PSEUDO_DEFAULT);
     rocrand_set_seed(gen, time(NULL));
     rocrand_generate_uniform(gen, d_vector_a, vector_size);
-    hipMemcpy(h_vector_a, d_vector_a, vector_size * sizeof(float), hipMemcpyDeviceToHost);
+    hipMemcpy(h_vector_a, d_vector_a, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
 
 
-    hipMalloc(&d_vector_b, vector_b_size * sizeof(float));
-    hipMemcpy(d_vector_b, h_vector_b, vector_b_size * sizeof(float), hipMemcpyHostToDevice);
+    hipMalloc(&d_vector_b, sizeInBytes<float>(vector_b_size));
+    hipMemcpy(d_vector_b, h_vector_b, sizeInBytes<float>(vector_b_size), hipMemcpyHostToDevice);
 
-    hipMalloc((void **)&d_vector_output, vector_size * sizeof(float));
-    hipMemcpy(d_vector_output, h_vector_output, vector_size * sizeof(float), hipMemcpyHostToDevice);
+    hipMalloc((void **)&d_vector_output, sizeInBytes<float>(vector_size));
+    hipMemcpy(d_vector_output, h_vector_output, sizeInBytes<float>(vector_size), hipMemcpyHostToDevice);
     
     hipLaunchKernelGGL(multiply_vector, dim3(num_blocks), dim3(block_size), 0, 0, d_vector_a, d_vector_b, d_vector_output, vector_size, vector_b_size);
     hipDeviceSynchronize();
     
-    hipMemcpy(h_vector_output, d_vector_output, vector_size * sizeof(float), hipMemcpyDeviceToHost);
+    hipMemcpy(h_vector_output, d_vector_output, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
 
     print_vector("Vector b", h_vector_b, vector_b_size);
     print_vector("Vector a", h_vector_a, vector_size);

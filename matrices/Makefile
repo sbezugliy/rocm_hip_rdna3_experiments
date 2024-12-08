@@ -21,7 +21,7 @@ CXX=$(HIPCC)
 build: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@ -I/usr/include -lrocrand
+	$(CXX) $(OBJECTS) -o $@ -I/usr/include -lrocrand -I../tcp_client -lTcpClient
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)
