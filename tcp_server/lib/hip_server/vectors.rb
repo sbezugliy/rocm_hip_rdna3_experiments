@@ -10,16 +10,15 @@ module HipServer
       @request = request
       @response = response
       @action = "vector_ops_test"
-      @session_path = File.join(__dir__, "../../db_files/#{$session_uuid}/#{@action}/")
     end
 
     def save
       @data = CBOR.decode(@request)
-      file_save
+      file_save(@data)
     rescue StandardError => e
       @record_type = "ERROR"
       @response = "ERROR #{e.message}"
-      @data = e.message
+      file_save(@request.inspect, files_path: ::HipServer.error_session_path, extension: 'dat')
     ensure
       db_save
     end
@@ -41,12 +40,13 @@ module HipServer
       $db.create_data(**dataset)
     end
 
-    def file_save
-      FileUtils.mkdir_p @session_path
-      @file_path = File.join(@session_path, "#{Time.now.to_i}-#{@uuid}.cbor")
-      FileUtils.touch @file_path
-      File.open(@file_path, "wb") { |file| file.write(@data) }
-      @data = @file_path
+    def file_save(data, files_path: nil, extension: 'cbor')
+      files_path ||= ::HipServer.session_path
+      FileUtils.mkdir_p File.join(files_path)
+      file_path = File.join(files_path, "#{Time.now.to_i}-#{@uuid}.#{extension}")
+      FileUtils.touch file_path
+      File.open(file_path, "wb") { |file| file.write(data) }
+      @data = file_path
     end
   end
 end

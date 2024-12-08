@@ -6,7 +6,7 @@ require "hip_server"
 
 tcp_server = HipServer::Tcp.new(20_000)
 tcp_server.run do |request|
-    puts "#{Time.now} - Request of #{request.bytesize} bytes"
+    puts "#{Time.now} - Request of #{request.nil? ? 0 : request.bytesize} bytes"
     vectors = ::HipServer::Vectors.new(request: request)
     vectors.save
     puts "#{Time.now} - Response: #{vectors.record_type == 'ERROR' ? vectors.response : `OK`}"

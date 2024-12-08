@@ -53,7 +53,7 @@ bool TcpClient::connectToServer() {
         return false;
     }
 
-    std::cout << "Connected to the server!" << std::endl;
+    std::cout << "Connected to the TCP server on `" << serverIp << ":" << port << "` !" << std::endl;
     return true;
 }
 

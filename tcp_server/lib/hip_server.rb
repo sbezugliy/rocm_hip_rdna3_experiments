@@ -9,8 +9,20 @@ require "socket"
 require "fileutils"
 require "securerandom"
 
+
+$session_uuid = SecureRandom.uuid
+
 # ROCm HIP compute TCP to Web Frontend gateway server
 module HipServer
+
+  def self.session_path(action)
+    File.join(__dir__, "../db_files/#{$session_uuid}/#{action}/")
+  end
+
+  def self.error_session_path(action)
+     File.join(__dir__, "../db_files/errors/#{$session_uuid}/#{action}/")
+  end
+
   class Error < StandardError; end
   # Your code goes here...
 end
@@ -24,6 +36,5 @@ loader.setup
 
 loader.reload
 
-$session_uuid = SecureRandom.uuid
 $db = HipServer::Db.new
 $db.init

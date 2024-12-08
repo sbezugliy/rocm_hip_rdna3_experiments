@@ -8,6 +8,7 @@ module HipServer
     end
 
     def run(&block)
+      puts "TCP server started at `#{@server.inspect}`"
       loop do
         Thread.start(@server.accept) do |client|
           client.puts block.call(client.gets)
