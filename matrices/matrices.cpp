@@ -17,8 +17,8 @@ size_t numBlocks(IntegerType variable, IntegerType block_size) {
     return (variable + block_size - 1) / block_size;
 }
 
-void print_vector(char *name, float *vector, size_t vector_size) {
-    std::cout << name << "<" << vector_size << ">: [ ";
+void print_vector(char *title, float *vector, size_t vector_size) {
+    std::cout << title << "<" << vector_size << ">: [ ";
     for (size_t i = 0; i < vector_size; ++i) {
         std::cout << vector[i];
         if (i < vector_size - 1) {
@@ -26,6 +26,10 @@ void print_vector(char *name, float *vector, size_t vector_size) {
         }
     }
     std::cout << " ]" << std::endl;
+}
+
+void print_stat(char *title, int variable) {
+    std::cout << title << variable << std::endl;
 }
 
 int main() {
@@ -45,10 +49,10 @@ int main() {
 
     float *d_vector_b;
 
-    std::cout << "Main vector size: " << vector_size << std::endl;
-    std::cout << "Second vector size: " << vector_b_size << std::endl;
-    std::cout << "Blocks number: " << num_blocks << std::endl;
-    std::cout << "Block size: " << block_size << std::endl;
+    print_stat("Main vector size: ", vector_size);
+    print_stat("Second vector size: ", vector_b_size);
+    print_stat("Blocks number: ", num_blocks);
+    print_stat("Block size: ", block_size);
 
     hipMalloc((void **)&d_vector_a, sizeInBytes<float>(vector_size));
     rocrand_create_generator(&gen, ROCRAND_RNG_PSEUDO_DEFAULT);
@@ -57,7 +61,7 @@ int main() {
     hipMemcpy(h_vector_a, d_vector_a, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
 
 
-    hipMalloc(&d_vector_b, sizeInBytes<float>(vector_b_size));
+    hipMalloc((void **)&d_vector_b, sizeInBytes<float>(vector_b_size));
     hipMemcpy(d_vector_b, h_vector_b, sizeInBytes<float>(vector_b_size), hipMemcpyHostToDevice);
 
     hipMalloc((void **)&d_vector_output, sizeInBytes<float>(vector_size));
