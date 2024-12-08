@@ -3,9 +3,9 @@
 #include "vector_multiply_kernel.hip.cpp" // Include the HIP kernel file
 #include <rocrand/rocrand.h>
 #include <time.h>
-#include <TcpServer.h>
 #include <cstddef> 
 #include <yaml-cpp/yaml.h>
+#include "../tcp_client/TcpClient.h"
 
 template<typename T>
 size_t sizeInBytes(size_t variable) {
@@ -32,19 +32,35 @@ void print_stat(char *title, int variable) {
     std::cout << title << variable << std::endl;
 }
 
+void tcp_server(std::string server_host, int server_port){
+    TcpClient client(server_host, server_port);
+    if (client.connectToServer()) {
+        client.startCommunication();
+    }
+}
+
 int main() {
-    size_t vector_size = 100;
-    size_t vector_b_size = 5;
-    size_t block_size = 256;
+    YAML::Node config = YAML::LoadFile("config.yaml");
+
+    size_t block_size = config["hip"]["block_size"].as<size_t>();
+    size_t vector_b_size = config["vector_ops"]["vector_b_size"].as<size_t>();
+    size_t vector_size = config["vector_ops"]["vector_size"].as<size_t>();
+    
+    std::string tcp_server_host = config["tcp_server"]["host"].as<std::string>();
+    int tcp_server_port = config["tcp_server"]["port"].as<int>();
 
     rocrand_generator gen;
-    float *d_vector_a, *h_vector_a, *h_vector_output, *d_vector_output;
+    std::vector<float> h_vector_a(vector_size, 0.0f);
+    std::vector<float> h_vector_output(vector_size, 0.0f); 
 
-    h_vector_a = (float*)malloc(sizeInBytes<float>(vector_size));
-    h_vector_output = (float*)malloc(sizeInBytes<float>(vector_size));
+    // Extract the float array from the YAML
+    std::vector<float> h_vector_b;
+    for (const auto& value : config["vector_ops"]["vector_b"]) {
+        h_vector_b.push_back(value.as<float>());
+    }
 
-    float h_vector_b[] = {-0.2575478, 0.765, 0.235346, -0.2357, 0.134537};
-    
+    float *d_vector_a, *d_vector_output;
+
     size_t num_blocks = numBlocks(vector_size, block_size);
 
     float *d_vector_b;
@@ -58,28 +74,30 @@ int main() {
     rocrand_create_generator(&gen, ROCRAND_RNG_PSEUDO_DEFAULT);
     rocrand_set_seed(gen, time(NULL));
     rocrand_generate_uniform(gen, d_vector_a, vector_size);
-    hipMemcpy(h_vector_a, d_vector_a, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
+    hipMemcpy(h_vector_a.data(), d_vector_a, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
 
 
     hipMalloc((void **)&d_vector_b, sizeInBytes<float>(vector_b_size));
-    hipMemcpy(d_vector_b, h_vector_b, sizeInBytes<float>(vector_b_size), hipMemcpyHostToDevice);
+    hipMemcpy(d_vector_b, h_vector_b.data(), sizeInBytes<float>(vector_b_size), hipMemcpyHostToDevice);
 
     hipMalloc((void **)&d_vector_output, sizeInBytes<float>(vector_size));
-    hipMemcpy(d_vector_output, h_vector_output, sizeInBytes<float>(vector_size), hipMemcpyHostToDevice);
+    hipMemcpy(d_vector_output, h_vector_output.data(), sizeInBytes<float>(vector_size), hipMemcpyHostToDevice);
     
     hipLaunchKernelGGL(multiply_vector, dim3(num_blocks), dim3(block_size), 0, 0, d_vector_a, d_vector_b, d_vector_output, vector_size, vector_b_size);
     hipDeviceSynchronize();
     
-    hipMemcpy(h_vector_output, d_vector_output, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
+    hipMemcpy(h_vector_output.data(), d_vector_output, sizeInBytes<float>(vector_size), hipMemcpyDeviceToHost);
 
-    print_vector("Vector b", h_vector_b, vector_b_size);
-    print_vector("Vector a", h_vector_a, vector_size);
-    print_vector("Result", h_vector_output, vector_size);
+    print_vector("Vector b", h_vector_b.data(), vector_b_size);
+    print_vector("Vector a", h_vector_a.data(), vector_size);
+    print_vector("Result", h_vector_output.data(), vector_size);
+
+    tcp_server(tcp_server_host, tcp_server_port);
 
     rocrand_destroy_generator(gen);
+
     hipFree(d_vector_a);
     hipFree(d_vector_b);
     hipFree(d_vector_output);
-
     return 0;
 }

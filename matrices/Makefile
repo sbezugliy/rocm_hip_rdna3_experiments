@@ -6,14 +6,11 @@ HIPCC=$(HIP_PATH)/bin/hipcc
 
 # HIP Targets
 HIPTARGETS=--amdgpu-target=gfx1100 # --amdgpu-target=gfx1036
-CXXFLAGS = -g $(HIPTARGETS) 
-
-# Matplot++ Library
-MATPLOT_LIB_DIR=/usr/local/lib  # Path to where libmatplot.a is located
+CXXFLAGS = -g $(HIPTARGETS) -I/usr/include -I../tcp_client
 
 # Executable and Source Files
 EXECUTABLE=./$(APP_NAME)
-SOURCES=$(APP_NAME).cpp
+SOURCES=$(APP_NAME).cpp ../tcp_client/TcpClient.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 
 CXX=$(HIPCC)
@@ -21,7 +18,13 @@ CXX=$(HIPCC)
 build: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@ -I/usr/include -lrocrand -I../tcp_client -lTcpClient
+	$(CXX) $(OBJECTS) -o $@ \
+	-L/opt/rocm/lib -lrocrand \
+	-I/usr/include \
+	-lyaml-cpp
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)

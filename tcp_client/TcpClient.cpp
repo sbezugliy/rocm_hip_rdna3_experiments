@@ -103,20 +103,3 @@ TcpClient::~TcpClient() {
         close(clientSd);
     }
 }
-
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: ip_address port" << std::endl;
-        return 0;
-    }
-
-    std::string serverIp(argv[1]);
-    int port = std::stoi(argv[2]);
-
-    TcpClient client(serverIp, port);
-    if (client.connectToServer()) {
-        client.startCommunication();
-    }
-
-    return 0;
-}
