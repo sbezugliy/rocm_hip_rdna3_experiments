@@ -1,0 +1,3 @@
+# This file generally contains external repository rules
+workspace(name = "tcp_client")
+register_toolchains("//tools/rocm:toolchain")

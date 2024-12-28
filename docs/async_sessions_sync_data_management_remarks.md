@@ -673,3 +673,132 @@ int main() {
 - **Scalability**: Such a design scales well with the number of sessions, as each session can be processed independently on different threads.
 
 This design effectively isolates session state management and allows you to flexibly handle multiple sessions concurrently, maintaining ordered processing within each session while keeping the overall system responsive and scalable.
+
+
+Running parallel computations using ROCm, especially in conjunction with a session management or message-passing model, involves coordinating data exchange and computation across CPU and GPU resources. Buffers can play a crucial role in this setup by enabling efficient data transfer and synchronization between the CPU and GPU.
+
+Here's how you can achieve parallel computations using ROCm with buffers:
+
+### Steps to Enable Parallel Computation with ROCm
+
+1. **Set Up ROCm and HIP Environment**:
+   - Ensure that the ROCm stack is installed and properly configured on your system. This includes HIP (Heterogeneous-compute Interface for Portability) for writing GPU-accelerated code.
+   - Verify your installation using provided ROCm tools (e.g., `rocminfo`, `hipcc`).
+
+2. **Use Buffers for Data Transfer**:
+   - **Host Buffers**: Allocate buffers in host memory for interaction with the CPU. These buffers can also serve as intermediaries between network messages and GPU processing.
+   - **Device Buffers**: Allocate buffers on the GPU to hold data for computation. Use HIP APIs to manage these device buffers efficiently.
+   - **Synchronous/Asynchronous Transfers**: Use HIP functions to copy data between host and device, leveraging asynchronous transfers where possible to overlap communication with computation. This is crucial for keeping the GPU fed with data without idle times.
+
+3. **Integrate with Session Management**:
+   - Define a session structure that encapsulates data buffers and computation tasks.
+   - Use threads or asynchronous processing to manage session lifecycle and control data flow between CPU, GPU, and potential network communications.
+
+4. **Execute Parallel Computations**:
+   - Launch kernels (GPU functions) using HIP. Ensure computations align with the buffers for input and output data.
+   - Use HIP streams to manage concurrency and parallel execution of multiple kernels across different sessions.
+
+5. **Synchronize and Retrieve Results**:
+   - Synchronize GPU execution to ensure computations are complete before accessing results.
+   - Use buffers to transfer results back to the CPU for further processing or communication.
+
+### Example Code Structure
+
+Here's a simplified example to illustrate managing sessions and using buffers with ROCm's HIP for parallel computations:
+
+```cpp
+#include <iostream>
+#include <hip/hip_runtime.h>
+#include <vector>
+#include <thread>
+
+// Define a simple HIP kernel
+__global__ void computeKernel(float* a, float* b, float* result, int size) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < size) {
+        result[index] = a[index] + b[index]; // Simple computation
+    }
+}
+
+// Session context representing a computation on the GPU
+class GpuSession {
+public:
+    GpuSession(int dataSize);
+    ~GpuSession();
+    void launchComputation();
+    void retrieveResults();
+
+private:
+    int dataSize;
+    float *d_a, *d_b, *d_result;
+    std::vector<float> h_a, h_b, h_result;
+    hipStream_t stream;
+};
+
+GpuSession::GpuSession(int dataSize) : dataSize(dataSize) {
+    h_a.resize(dataSize, 1.0f);  // Initialize host buffers with sample data
+    h_b.resize(dataSize, 2.0f);
+    h_result.resize(dataSize);
+
+    hipMalloc(&d_a, dataSize * sizeof(float));
+    hipMalloc(&d_b, dataSize * sizeof(float));
+    hipMalloc(&d_result, dataSize * sizeof(float));
+
+    hipStreamCreate(&stream);
+}
+
+GpuSession::~GpuSession() {
+    hipFree(d_a);
+    hipFree(d_b);
+    hipFree(d_result);
+    hipStreamDestroy(stream);
+}
+
+void GpuSession::launchComputation() {
+    hipMemcpyAsync(d_a, h_a.data(), dataSize * sizeof(float), hipMemcpyHostToDevice, stream);
+    hipMemcpyAsync(d_b, h_b.data(), dataSize * sizeof(float), hipMemcpyHostToDevice, stream);
+
+    int blocks = (dataSize + 255) / 256;
+    computeKernel<<<blocks, 256, 0, stream>>>(d_a, d_b, d_result, dataSize);
+
+    hipMemcpyAsync(h_result.data(), d_result, dataSize * sizeof(float), hipMemcpyDeviceToHost, stream);
+}
+
+void GpuSession::retrieveResults() {
+    hipStreamSynchronize(stream); // Ensure all operations are complete
+    std::cout << "Computation results for first element: " << h_result[0] << std::endl;
+}
+
+int main() {
+    const int sessionCount = 10;
+    const int dataSize = 1000;
+    
+    std::vector<GpuSession> sessions;
+    for (int i = 0; i < sessionCount; ++i) {
+        sessions.emplace_back(dataSize); // Initialize sessions
+    }
+
+    // Launch computations in parallel, each session runs on its own thread
+    std::vector<std::thread> threads;
+    for (auto& session : sessions) {
+        threads.emplace_back([&session]() {
+            session.launchComputation();
+            session.retrieveResults();
+        });
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    return 0;
+}
+```
+
+### Key Factors in This Approach
+
+- **Buffer Management**: Buffers are essential for staging data transfers and holding results. Using asynchronous transfers ensures that data moves efficiently between host and device.
+- **Concurrency**: By launching separate threads or using multiple HIP streams, multiple sessions can be computed concurrently.
+- **Parallel Execution**: The GPU can execute many kernels simultaneously across different streams or with a well-planned grid/block configuration, maximizing throughput.
+
+This setup, using ROCm and HIP, allows you to leverage GPU capabilities for high-performance parallel computing while maintaining a session-oriented approach to manage data and computation workflows.

@@ -21,7 +21,9 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ \
 	-L/opt/rocm/lib -lrocrand \
 	-I/usr/include \
-	-lyaml-cpp
+	-lyaml-cpp \
+	-limgui \
+	-lSDL3
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

@@ -10,22 +10,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-class TcpClient {
-public:
-    TcpClient(const std::string& serverIp, int port);
-    bool connectToServer();
-    void startCommunication();
-    ~TcpClient();
-
-private:
-    std::string serverIp;
-    int port;
-    int clientSd;
-    sockaddr_in sendSockAddr;
-
-    void handleCommunication();
-};
-
 TcpClient::TcpClient(const std::string& serverIp, int port)
     : serverIp(serverIp), port(port), clientSd(-1) {
     memset(&sendSockAddr, 0, sizeof(sendSockAddr));
