@@ -1,2 +1,0 @@
-# This file generally contains external repository rules
-workspace(name = "neural_network")

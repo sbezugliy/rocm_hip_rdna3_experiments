@@ -1,7 +1,10 @@
 // tests/test_BaseNeuron.cpp
-#define CATCH_CONFIG_BASE_NEURON
-#include <catch2/catch_all.hpp>
+#include <gtest/gtest.h>
 
-TEST_CASE("Example test case") {
-    REQUIRE(1 + 1 == 2);
+// Demonstrate some basic assertions.
+TEST(BaseNeuronTest, BasicAssertions) {
+  // Expect two strings not to be equal.
+  EXPECT_STRNE("hello", "world");
+  // Expect equality.
+  EXPECT_EQ(7 * 6, 42);
 }

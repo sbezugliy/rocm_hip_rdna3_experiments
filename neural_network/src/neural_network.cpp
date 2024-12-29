@@ -5,7 +5,7 @@
 #include <time.h>
 #include <cstddef> 
 #include <yaml-cpp/yaml.h>
-#include "../tcp_client/TcpClient.h"
+#include "tcp_client/TcpClient.hpp"
 
 template<typename T>
 size_t sizeInBytes(size_t variable) {
