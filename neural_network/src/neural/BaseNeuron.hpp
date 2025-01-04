@@ -1,33 +1,35 @@
-// BaseNeuron.hpp
 #ifndef BASE_NEURON_HPP
 #define BASE_NEURON_HPP
 
-#include <iostream>
 #include <vector>
-#include <stdexcept>
 
 class BaseNeuron {
 public:
-    // Constructor: initializes the neuron
     BaseNeuron(float* input_ptr = nullptr, float* output_ptr = nullptr, 
                size_t inputs_size = 1, size_t outputs_size = 1);
 
-    // Activates main neuron function
     std::vector<float> activate();
-
-    // Defines neuron function derivative
     std::vector<float> derivative();
 
-    // Destructor
-    ~BaseNeuron();
+    virtual ~BaseNeuron();
 
-private:
+    // Accessor methods
+    float* getInput() const { return input; }
+    float* getOutput() const { return output; }
+    size_t getInputsSize() const { return inputs_size; }
+    size_t getOutputsSize() const { return outputs_size; }
+
+protected:
     float* input;
     float* output;
     size_t inputs_size;
     size_t outputs_size;
 
     void check_and_allocate();
+
+private:
+    bool input_managed;  // True if input is allocated internally
+    bool output_managed; // True if output is allocated internally
 };
 
 #endif // BASE_NEURON_HPP

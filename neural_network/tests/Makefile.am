@@ -1,7 +1,7 @@
 TESTS = run_tests
 check_PROGRAMS = run_tests
 
-run_tests_SOURCES = test_neural_network.cpp neural/test_BaseNeuron.cpp
+run_tests_SOURCES = test_neural_network.cpp neural/test_BaseNeuron.cpp neural/test_SigmoidNeuron.cpp
 
 # Include directories
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/src/neural

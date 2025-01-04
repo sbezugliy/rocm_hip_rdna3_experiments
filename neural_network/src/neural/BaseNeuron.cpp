@@ -1,28 +1,27 @@
-// BaseNeuron.cpp
 #include "BaseNeuron.hpp"
-#include <cstring> // For std::memcpy
+#include <algorithm> // For std::fill_n
+#include <cstring>   // For std::memcpy
 
 BaseNeuron::BaseNeuron(float* input_ptr, float* output_ptr, size_t inputs_size, size_t outputs_size)
-    : inputs_size(inputs_size), outputs_size(outputs_size) {
+    : inputs_size(inputs_size), outputs_size(outputs_size),
+      input(input_ptr), output(output_ptr),
+      input_managed(input_ptr == nullptr), output_managed(output_ptr == nullptr) {
     
+    if (inputs_size != outputs_size) {
+        throw std::runtime_error("Input and output sizes must match for SigmoidNeuron.");
+    }
     // Allocate memory for inputs and outputs if not provided
-    input = input_ptr ? input_ptr : new float[inputs_size];
-    output = output_ptr ? output_ptr : new float[outputs_size];
-
-    // Initialize allocated arrays to zero if newly allocated
-    if (!input_ptr) {
+    if (input_managed) {
+        input = new float[inputs_size];
         std::fill_n(input, inputs_size, 0.0f);
     }
-    if (!output_ptr) {
+    if (output_managed) {
+        output = new float[outputs_size];
         std::fill_n(output, outputs_size, 0.0f);
     }
 }
 
 std::vector<float> BaseNeuron::activate() {
-    if (inputs_size != outputs_size) {
-        throw std::runtime_error("Input and output sizes must match for this simple passthrough");
-    }
-
     std::memcpy(output, input, inputs_size * sizeof(float));
     return std::vector<float>(output, output + outputs_size);
 }
@@ -33,6 +32,10 @@ std::vector<float> BaseNeuron::derivative() {
 
 BaseNeuron::~BaseNeuron() {
     // Only release memory if it was allocated by this instance
-    // delete[] input;
-    // delete[] output;
+    if (input_managed) {
+        delete[] input;
+    }
+    if (output_managed) {
+        delete[] output;
+    }
 }
