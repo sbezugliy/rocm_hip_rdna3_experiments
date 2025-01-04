@@ -3,12 +3,10 @@
 #include <cstring>   // For std::memcpy
 
 BaseNeuron::BaseNeuron(float* input_ptr, float* output_ptr, size_t inputs_size, size_t outputs_size)
-    : inputs_size(inputs_size), outputs_size(outputs_size),
-      input(input_ptr), output(output_ptr),
-      input_managed(input_ptr == nullptr), output_managed(output_ptr == nullptr) {
+    : inputs_size(inputs_size), outputs_size(outputs_size), input(input_ptr), output(output_ptr), input_managed(input_ptr == nullptr), output_managed(output_ptr == nullptr) {
     
     if (inputs_size != outputs_size) {
-        throw std::runtime_error("Input and output sizes must match for SigmoidNeuron.");
+        throw std::runtime_error("Input and output sizes must match.");
     }
     // Allocate memory for inputs and outputs if not provided
     if (input_managed) {
