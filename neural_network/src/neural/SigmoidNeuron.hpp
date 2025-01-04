@@ -1,15 +1,15 @@
 // BaseNeuron.hpp
-#ifndef BASE_NEURON_HPP
-#define BASE_NEURON_HPP
+#ifndef SIGMOID_NEURON_HPP
+#define SIGMOID_NEURON_HPP
 
 #include <iostream>
 #include <vector>
 #include <stdexcept>
 
-class BaseNeuron {
+class SgmoidNeuron : BaseNeuron {
 public:
     // Constructor: initializes the neuron
-    BaseNeuron(float* input_ptr = nullptr, float* output_ptr = nullptr, 
+    SigmoidNeuron(float* input_ptr = nullptr, float* output_ptr = nullptr, 
                size_t inputs_size = 1, size_t outputs_size = 1);
 
     // Activates main neuron function

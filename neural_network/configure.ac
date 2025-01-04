@@ -3,33 +3,27 @@ AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_RANLIB
 
-# Set hipcc as the default C++ compiler
+# Choose hipcc as the default C++ compiler
 if test "x$CXX" = "xg++"; then
     CXX=/opt/rocm/bin/hipcc
 fi
-AC_SUBST(CXX)
+AC_SUBST([CXX])
 
-# Check CXXFLAGS
-AM_CONDITIONAL([CUSTOM_PATH], true)
+# Set default CXXFLAGS if empty
 if test "x$CXXFLAGS" = "x"; then
-    CXXFLAGS=" \
-        --offload-arch=gfx1036 --offload-arch=gfx1100 \
-        -I/opt/rocm/include \
-        -I/usr/include \
-        $CXXFLAGS"
+    CXXFLAGS="--offload-arch=gfx1036 --offload-arch=gfx1100 -I/opt/rocm/include -I/usr/include $CXXFLAGS"
 fi
-AC_SUBST(CXXFLAGS)
+AC_SUBST([CXXFLAGS])
 
+# Set default LDFLAGS if empty
 if test "x$LDFLAGS" = "x"; then
-    LDFLAGS=" \
-        -L/opt/rocm/lib \
-        -L/opt/rocm/lib \
-        $LDFLAGS"
+    LDFLAGS="-L/opt/rocm/lib $LDFLAGS"
 fi
-AC_SUBST(LDFLAGS)
+AC_SUBST([LDFLAGS])
 
-# Libraries
+# Library checks
 AC_CHECK_LIB([rocrand], [main], , AC_MSG_ERROR([rocRAND library not found]))
 AC_CHECK_LIB([yaml-cpp], [main], , AC_MSG_ERROR([yaml-cpp library not found]))
 AC_CHECK_LIB([imgui], [main], , AC_MSG_ERROR([ImGui library not found]))
